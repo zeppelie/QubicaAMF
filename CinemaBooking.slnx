@@ -15,5 +15,10 @@
   <Folder Name="/src/" />
   <Folder Name="/src/Catalog/">
     <Project Path="src/Catalog/CinemaBooking.Catalog.Api/CinemaBooking.Catalog.Api.csproj" />
+    <Project Path="src/Catalog/CinemaBooking.Catalog.Core/CinemaBooking.Catalog.Core.csproj" />
+    <Project Path="src/Catalog/CinemaBooking.Catalog.Infrastructure/CinemaBooking.Catalog.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/CinemaBooking.Catalog.Tests/CinemaBooking.Catalog.Tests.csproj" />
   </Folder>
 </Solution>
