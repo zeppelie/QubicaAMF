@@ -1,0 +1,256 @@
+{
+  "info": {
+    "name": "Cinema Booking",
+    "description": "Calls for the Cinema Booking services. Start the services, then run the folders from top to bottom.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "catalogUrl", "value": "http://localhost:5101" },
+    { "key": "hallId", "value": "" },
+    { "key": "movieId", "value": "" },
+    { "key": "showId", "value": "" },
+    { "key": "showStartsAt", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Catalog",
+      "item": [
+        {
+          "name": "Health",
+          "request": { "method": "GET", "url": "{{catalogUrl}}/health" },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('service is up', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List halls",
+          "request": { "method": "GET", "url": "{{catalogUrl}}/halls" },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('returns the halls', () => {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(pm.response.json()).to.be.an('array').that.is.not.empty;",
+                  "});",
+                  "pm.collectionVariables.set('hallId', pm.response.json()[0].hallId);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List movies",
+          "request": { "method": "GET", "url": "{{catalogUrl}}/movies" },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('returns the movies', () => {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(pm.response.json()).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Add movie",
+          "request": {
+            "method": "POST",
+            "url": "{{catalogUrl}}/movies",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"The Third Man\",\n  \"durationMinutes\": 104\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('movie is created', () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set('movieId', pm.response.json().movieId);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Add movie without title",
+          "request": {
+            "method": "POST",
+            "url": "{{catalogUrl}}/movies",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"\",\n  \"durationMinutes\": 104\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('movie is rejected', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Schedule show",
+          "request": {
+            "method": "POST",
+            "url": "{{catalogUrl}}/shows",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"movieId\": {{movieId}},\n  \"hallId\": {{hallId}},\n  \"startsAt\": \"{{showStartsAt}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const start = new Date(Date.UTC(2099, 0, 1, 20, 0, 0));",
+                  "start.setUTCDate(start.getUTCDate() + Math.floor(Math.random() * 300000));",
+                  "pm.collectionVariables.set('showStartsAt', start.toISOString());"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('show is scheduled', () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set('showId', pm.response.json().showId);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Schedule show in a busy hall",
+          "request": {
+            "method": "POST",
+            "url": "{{catalogUrl}}/shows",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"movieId\": {{movieId}},\n  \"hallId\": {{hallId}},\n  \"startsAt\": \"{{showStartsAt}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('second show is refused', () => pm.response.to.have.status(409));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List upcoming shows",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{catalogUrl}}/shows",
+              "host": ["{{catalogUrl}}"],
+              "path": ["shows"],
+              "query": [{ "key": "date", "value": "2026-10-05", "disabled": true }]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('returns the scheduled show', () => {",
+                  "    pm.response.to.have.status(200);",
+                  "    const ids = pm.response.json().map(show => show.showId);",
+                  "    pm.expect(ids).to.include(Number(pm.collectionVariables.get('showId')));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get show",
+          "request": { "method": "GET", "url": "{{catalogUrl}}/shows/{{showId}}" },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('returns the show', () => {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(pm.response.json().movieTitle).to.eql('The Third Man');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List seats of show",
+          "request": { "method": "GET", "url": "{{catalogUrl}}/shows/{{showId}}/seats" },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('returns the seats of the hall', () => {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(pm.response.json()).to.be.an('array').that.is.not.empty;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get unknown show",
+          "request": { "method": "GET", "url": "{{catalogUrl}}/shows/0" },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('show is not found', () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

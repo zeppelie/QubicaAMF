@@ -12,6 +12,9 @@
   <Folder Name="/database/1.0.0/dml/">
     <File Path="database/1.0.0/dml/01_catalog_seed.sql" />
   </Folder>
+  <Folder Name="/postman/">
+    <File Path="postman/CinemaBooking.postman_collection.json" />
+  </Folder>
   <Folder Name="/src/" />
   <Folder Name="/src/Catalog/">
     <Project Path="src/Catalog/CinemaBooking.Catalog.Api/CinemaBooking.Catalog.Api.csproj" />
