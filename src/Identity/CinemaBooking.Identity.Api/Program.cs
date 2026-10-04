@@ -5,12 +5,14 @@ using CinemaBooking.Security;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
 var connectionString = builder.Configuration.GetConnectionString("Identity")
     ?? throw new InvalidOperationException("Connection string 'Identity' is missing.");
 
+builder.Services.AddSerilog(logger => logger.ReadFrom.Configuration(builder.Configuration));
 builder.Services.AddControllers();
 builder.Services.AddProblemDetails();
 builder.Services.AddOpenApi();
@@ -25,6 +27,11 @@ builder.Services.AddScoped<IAccountService, AccountService>();
 
 var app = builder.Build();
 
+app.UseSerilogRequestLogging();
+app.UseExceptionHandler();
+app.UseStatusCodePages();
+app.UseAuthentication();
+app.UseAuthorization();
 app.MapControllers();
 app.MapOpenApi();
 app.MapScalarApiReference(options => options.WithTitle("Cinema Identity API"));

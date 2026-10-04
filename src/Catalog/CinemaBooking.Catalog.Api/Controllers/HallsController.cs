@@ -1,3 +1,4 @@
+using CinemaBooking.Catalog.Api.Contracts;
 using CinemaBooking.Catalog.Core;
 using Microsoft.AspNetCore.Mvc;
 

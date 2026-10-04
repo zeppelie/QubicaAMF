@@ -1,6 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
-using CinemaBooking.Catalog.Api;
+using CinemaBooking.Catalog.Api.Contracts;
 using CinemaBooking.Catalog.Infrastructure.Persistence;
 using CinemaBooking.Security;
 using CinemaBooking.Tests.Shared;
@@ -83,6 +83,27 @@ public class CatalogApiTests(WebApplicationFactory<Program> factory) : IClassFix
             Assert.Equal(HttpStatusCode.Created, first.StatusCode);
             Assert.Equal(startsAt, (await first.Content.ReadFromJsonAsync<ShowResponse>())!.StartsAt);
             Assert.Equal(HttpStatusCode.Conflict, second.StatusCode);
+        }
+        finally
+        {
+            await InDatabase(db => db.Shows.Where(show => show.StartsAt == startsAt.UtcDateTime).ExecuteDeleteAsync());
+        }
+    }
+
+    [Fact]
+    public async Task Only_one_of_many_simultaneous_requests_gets_the_slot()
+    {
+        var (movieId, hallId) = await InDatabase(async db =>
+            ((await db.Movies.FirstAsync()).MovieId, (await db.Halls.FirstAsync()).HallId));
+        var startsAt = new DateTimeOffset(2098, 1, 1, 0, 0, 0, TimeSpan.Zero).AddMinutes(Random.Shared.Next(500_000));
+        var request = new CreateShowRequest(movieId, hallId, startsAt);
+
+        try
+        {
+            var responses = await Task.WhenAll(Enumerable.Range(0, 6).Select(_ => _admin.PostAsJsonAsync("/shows", request)));
+
+            Assert.Single(responses, response => response.StatusCode == HttpStatusCode.Created);
+            Assert.Equal(5, responses.Count(response => response.StatusCode == HttpStatusCode.Conflict));
         }
         finally
         {

@@ -1,11 +1,14 @@
 using CinemaBooking.Catalog.Core;
 using CinemaBooking.Catalog.Core.Entities;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 
 namespace CinemaBooking.Catalog.Infrastructure.Persistence;
 
 public sealed class CatalogRepository(CatalogDbContext db) : ICatalogRepository
 {
+    private const int UniqueConstraintViolation = 2627;
+
     public async Task<IReadOnlyList<Hall>> ListHallsAsync(CancellationToken cancellationToken) =>
         await db.Halls.AsNoTracking().OrderBy(hall => hall.Name).ToListAsync(cancellationToken);
 
@@ -40,10 +43,18 @@ public sealed class CatalogRepository(CatalogDbContext db) : ICatalogRepository
     public Task<Show?> FindShowAsync(int showId, CancellationToken cancellationToken) =>
         ShowsWithDetails().FirstOrDefaultAsync(show => show.ShowId == showId, cancellationToken);
 
-    public async Task AddShowAsync(Show show, CancellationToken cancellationToken)
+    public async Task<bool> TryAddShowAsync(Show show, CancellationToken cancellationToken)
     {
         db.Shows.Add(show);
-        await db.SaveChangesAsync(cancellationToken);
+        try
+        {
+            await db.SaveChangesAsync(cancellationToken);
+            return true;
+        }
+        catch (DbUpdateException exception) when (exception.InnerException is SqlException { Number: UniqueConstraintViolation })
+        {
+            return false;
+        }
     }
 
     private IQueryable<Show> ShowsWithDetails() =>

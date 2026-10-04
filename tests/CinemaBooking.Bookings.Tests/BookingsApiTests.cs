@@ -1,6 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
-using CinemaBooking.Bookings.Api;
+using CinemaBooking.Bookings.Api.Contracts;
 using CinemaBooking.Security;
 using CinemaBooking.Tests.Shared;
 
@@ -92,6 +92,7 @@ public class BookingsApiTests(BookingsApiFactory factory) : IClassFixture<Bookin
         var response = await factory.CreateClient().PostAsJsonAsync("/bookings", request);
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        Assert.Equal("application/problem+json", response.Content.Headers.ContentType?.MediaType);
     }
 
     [Fact]

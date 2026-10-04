@@ -1,6 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
-using CinemaBooking.Identity.Api;
+using CinemaBooking.Identity.Api.Contracts;
 using CinemaBooking.Identity.Api.Persistence;
 using CinemaBooking.Security;
 using Microsoft.AspNetCore.Mvc.Testing;

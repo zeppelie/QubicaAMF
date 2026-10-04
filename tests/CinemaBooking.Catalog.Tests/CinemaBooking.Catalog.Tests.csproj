@@ -13,7 +13,7 @@
 
   <ItemGroup>
     <Using Include="Xunit" />
-    <Compile Include="..\Shared\TestTokens.cs" Link="Shared\TestTokens.cs" />
+    <Compile Include="..\Shared\*.cs" Link="Shared\%(Filename)%(Extension)" />
   </ItemGroup>
 
   <ItemGroup>

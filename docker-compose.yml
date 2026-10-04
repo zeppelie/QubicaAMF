@@ -46,6 +46,8 @@ services:
       Jwt__Key: *jwt-key
     ports:
       - "5103:8080"
+    volumes:
+      - identity-logs:/app/logs
 
   catalog:
     <<: *service
@@ -58,6 +60,8 @@ services:
       Jwt__Key: *jwt-key
     ports:
       - "5101:8080"
+    volumes:
+      - catalog-logs:/app/logs
 
   bookings:
     <<: *service
@@ -71,6 +75,8 @@ services:
       Jwt__Key: *jwt-key
     ports:
       - "5102:8080"
+    volumes:
+      - bookings-logs:/app/logs
 
   jenkins:
     profiles: ["ci"]
@@ -94,3 +100,6 @@ services:
 volumes:
   db-data:
   jenkins-data:
+  identity-logs:
+  catalog-logs:
+  bookings-logs:

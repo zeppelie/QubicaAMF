@@ -1,24 +1,7 @@
-using System.ComponentModel.DataAnnotations;
 using CinemaBooking.Bookings.Core;
 using CinemaBooking.Bookings.Core.Entities;
 
-namespace CinemaBooking.Bookings.Api;
-
-public sealed record BookingItemRequest(int ShowId, IReadOnlyList<int>? SeatIds, int? Quantity);
-
-public sealed record CreateBookingRequest([Required, MinLength(1)] IReadOnlyList<BookingItemRequest> Items);
-
-public sealed record BookedSeatResponse(int ShowId, int SeatId);
-
-public sealed record BookingResponse(
-    int BookingId,
-    DateTimeOffset CreatedAt,
-    DateTimeOffset? CancelledAt,
-    IReadOnlyList<BookedSeatResponse> Seats);
-
-public sealed record SeatAvailabilityResponse(int SeatId, string RowLabel, int SeatNumber, bool IsFree);
-
-public sealed record ShowAvailabilityResponse(int ShowId, int FreeSeats, IReadOnlyList<SeatAvailabilityResponse> Seats);
+namespace CinemaBooking.Bookings.Api.Contracts;
 
 public static class ContractMappings
 {
@@ -36,5 +19,6 @@ public static class ContractMappings
         [.. availability.Seats.Select(seat =>
             new SeatAvailabilityResponse(seat.Seat.SeatId, seat.Seat.RowLabel, seat.Seat.SeatNumber, seat.IsFree))]);
 
+    // The database stores UTC times without an offset.
     private static DateTimeOffset Utc(DateTime value) => new(value, TimeSpan.Zero);
 }

@@ -1,3 +1,4 @@
+using CinemaBooking.Catalog.Api.Contracts;
 using CinemaBooking.Catalog.Core;
 using CinemaBooking.Catalog.Core.Entities;
 using CinemaBooking.Security;
@@ -8,7 +9,7 @@ namespace CinemaBooking.Catalog.Api.Controllers;
 
 [ApiController]
 [Route("movies")]
-public sealed class MoviesController(ICatalogRepository repository) : ControllerBase
+public sealed class MoviesController(ICatalogRepository repository, ILogger<MoviesController> logger) : ControllerBase
 {
     /// <summary>Lists the movies in the catalog.</summary>
     [HttpGet]
@@ -25,8 +26,10 @@ public sealed class MoviesController(ICatalogRepository repository) : Controller
     [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Create(CreateMovieRequest request, CancellationToken cancellationToken)
     {
-        var movie = new Movie { Title = request.Title.Trim(), DurationMinutes = request.DurationMinutes };
+        var movie = Movie.Create(request.Title, request.DurationMinutes);
         await repository.AddMovieAsync(movie, cancellationToken);
+
+        logger.LogInformation("Movie {MovieId} '{Title}' added", movie.MovieId, movie.Title);
         return Created($"/movies/{movie.MovieId}", movie.ToResponse());
     }
 }

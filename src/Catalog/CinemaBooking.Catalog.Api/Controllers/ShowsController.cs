@@ -1,3 +1,4 @@
+using CinemaBooking.Catalog.Api.Contracts;
 using CinemaBooking.Catalog.Core;
 using CinemaBooking.Security;
 using Microsoft.AspNetCore.Authorization;
@@ -7,7 +8,11 @@ namespace CinemaBooking.Catalog.Api.Controllers;
 
 [ApiController]
 [Route("shows")]
-public sealed class ShowsController(ICatalogRepository repository, IShowScheduler scheduler, TimeProvider clock) : ControllerBase
+public sealed class ShowsController(
+    ICatalogRepository repository,
+    IShowScheduler scheduler,
+    TimeProvider clock,
+    ILogger<ShowsController> logger) : ControllerBase
 {
     /// <summary>Lists the shows of a given day, or all the upcoming ones when no day is given.</summary>
     [HttpGet]
@@ -55,21 +60,31 @@ public sealed class ShowsController(ICatalogRepository repository, IShowSchedule
     {
         var result = await scheduler.ScheduleAsync(request.MovieId, request.HallId, request.StartsAt.UtcDateTime, cancellationToken);
 
-        switch (result.Error)
+        if (result.Show is null)
         {
-            case ScheduleShowError.MovieNotFound:
-                return Problem($"Movie {request.MovieId} does not exist.", statusCode: StatusCodes.Status404NotFound);
-            case ScheduleShowError.HallNotFound:
-                return Problem($"Hall {request.HallId} does not exist.", statusCode: StatusCodes.Status404NotFound);
-            case ScheduleShowError.StartsInThePast:
-                return Problem("A show must start in the future.", statusCode: StatusCodes.Status400BadRequest);
-            case ScheduleShowError.HallBusy:
-                return Problem("The hall is already taken at that time.", statusCode: StatusCodes.Status409Conflict);
+            logger.LogWarning(
+                "Show of movie {MovieId} in hall {HallId} at {StartsAt} refused: {Error}",
+                request.MovieId, request.HallId, request.StartsAt, result.Error);
+            return Refused(request, result.Error);
         }
 
-        var show = await repository.FindShowAsync(result.Show!.ShowId, cancellationToken);
+        logger.LogInformation("Show {ShowId} scheduled in hall {HallId} at {StartsAt}", result.Show.ShowId, request.HallId, request.StartsAt);
+
+        // Read again to get the movie and the hall that the response shows.
+        var show = await repository.FindShowAsync(result.Show.ShowId, cancellationToken);
         return CreatedAtAction(nameof(GetById), new { showId = show!.ShowId }, show.ToResponse());
     }
+
+    private ObjectResult Refused(CreateShowRequest request, ScheduleShowError? error) => error switch
+    {
+        ScheduleShowError.MovieNotFound => Problem(
+            $"Movie {request.MovieId} does not exist.", statusCode: StatusCodes.Status404NotFound),
+        ScheduleShowError.HallNotFound => Problem(
+            $"Hall {request.HallId} does not exist.", statusCode: StatusCodes.Status404NotFound),
+        ScheduleShowError.StartsInThePast => Problem(
+            "A show must start in the future.", statusCode: StatusCodes.Status400BadRequest),
+        _ => Problem("The hall is already taken at that time.", statusCode: StatusCodes.Status409Conflict)
+    };
 
     private ObjectResult ShowNotFound(int showId) =>
         Problem($"Show {showId} does not exist.", statusCode: StatusCodes.Status404NotFound);

@@ -9,6 +9,7 @@ FROM mcr.microsoft.com/dotnet/aspnet:10.0
 ARG SERVICE
 WORKDIR /app
 COPY --from=build /app ./
+RUN mkdir logs && chown $APP_UID logs
 ENV ASPNETCORE_HTTP_PORTS=8080
 ENV SERVICE_ASSEMBLY=CinemaBooking.${SERVICE}.Api.dll
 USER $APP_UID

@@ -17,15 +17,19 @@ public sealed class ShowScheduler(ICatalogRepository repository, TimeProvider cl
             return ScheduleShowResult.Failed(ScheduleShowError.HallNotFound);
 
         var endsAt = startsAt.AddMinutes(movie.DurationMinutes);
-        var nearbyShows = await repository.ListShowsAsync(startsAt.AddDays(-1), endsAt, hallId, cancellationToken);
-        if (nearbyShows.Any(show => Overlaps(show, startsAt, endsAt)))
+        if (await HallIsBusyAsync(hallId, startsAt, endsAt, cancellationToken))
             return ScheduleShowResult.Failed(ScheduleShowError.HallBusy);
 
-        var newShow = new Show { MovieId = movieId, HallId = hallId, StartsAt = startsAt };
-        await repository.AddShowAsync(newShow, cancellationToken);
-        return ScheduleShowResult.Scheduled(newShow);
+        var show = new Show { MovieId = movieId, HallId = hallId, StartsAt = startsAt };
+        return await repository.TryAddShowAsync(show, cancellationToken)
+            ? ScheduleShowResult.Scheduled(show)
+            : ScheduleShowResult.Failed(ScheduleShowError.HallBusy);
     }
 
-    private static bool Overlaps(Show show, DateTime startsAt, DateTime endsAt) =>
-        show.StartsAt < endsAt && startsAt < show.StartsAt.AddMinutes(show.Movie.DurationMinutes);
+    private async Task<bool> HallIsBusyAsync(int hallId, DateTime from, DateTime to, CancellationToken cancellationToken)
+    {
+        // A show that began the day before can still be running: no movie lasts longer than that.
+        var nearbyShows = await repository.ListShowsAsync(from.AddDays(-1), to, hallId, cancellationToken);
+        return nearbyShows.Any(show => show.Overlaps(from, to));
+    }
 }

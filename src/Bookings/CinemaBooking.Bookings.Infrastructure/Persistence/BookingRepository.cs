@@ -41,6 +41,6 @@ public sealed class BookingRepository(BookingsDbContext db) : IBookingRepository
             .OrderByDescending(booking => booking.CreatedAt)
             .ToListAsync(cancellationToken);
 
-    public Task UpdateAsync(Booking booking, CancellationToken cancellationToken) =>
+    public Task SaveChangesAsync(CancellationToken cancellationToken) =>
         db.SaveChangesAsync(cancellationToken);
 }

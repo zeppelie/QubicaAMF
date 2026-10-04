@@ -3,15 +3,15 @@ using CinemaBooking.Bookings.Core.Entities;
 
 namespace CinemaBooking.Bookings.Tests;
 
-internal sealed class FixedClock(DateTime utcNow) : TimeProvider
-{
-    public override DateTimeOffset GetUtcNow() => utcNow;
-}
-
 internal sealed class FakeShowCatalog(params ShowInfo[] shows) : IShowCatalog
 {
-    public Task<ShowInfo?> FindShowAsync(int showId, CancellationToken cancellationToken) =>
-        Task.FromResult(shows.FirstOrDefault(show => show.ShowId == showId));
+    public int Lookups { get; private set; }
+
+    public Task<ShowInfo?> FindShowAsync(int showId, CancellationToken cancellationToken)
+    {
+        Lookups++;
+        return Task.FromResult(shows.FirstOrDefault(show => show.ShowId == showId));
+    }
 }
 
 internal sealed class InMemoryBookings : IBookingRepository
@@ -43,7 +43,7 @@ internal sealed class InMemoryBookings : IBookingRepository
     public Task<IReadOnlyList<Booking>> ListByUserAsync(int userId, CancellationToken cancellationToken) =>
         Task.FromResult<IReadOnlyList<Booking>>([.. Bookings.Where(booking => booking.UserId == userId)]);
 
-    public Task UpdateAsync(Booking booking, CancellationToken cancellationToken) => Task.CompletedTask;
+    public Task SaveChangesAsync(CancellationToken cancellationToken) => Task.CompletedTask;
 }
 
 internal static class Halls

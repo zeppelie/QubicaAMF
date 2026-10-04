@@ -1,5 +1,6 @@
 using CinemaBooking.Catalog.Core;
 using CinemaBooking.Catalog.Core.Entities;
+using CinemaBooking.Tests.Shared;
 
 namespace CinemaBooking.Catalog.Tests;
 
@@ -75,14 +76,21 @@ public class ShowSchedulerTests
         Assert.Equal(2, _catalog.Shows.Count);
     }
 
-    private sealed class FixedClock(DateTime utcNow) : TimeProvider
+    [Fact]
+    public async Task Reports_a_busy_hall_when_someone_else_takes_the_slot_first()
     {
-        public override DateTimeOffset GetUtcNow() => utcNow;
+        _catalog.SomeoneElseTakesTheSlot = true;
+
+        var result = await _scheduler.ScheduleAsync(Movie.MovieId, HallId, Tonight, CancellationToken.None);
+
+        Assert.Equal(ScheduleShowError.HallBusy, result.Error);
     }
 
     private sealed class InMemoryCatalog(Movie movie, int hallId) : ICatalogRepository
     {
         public List<Show> Shows { get; } = [];
+
+        public bool SomeoneElseTakesTheSlot { get; set; }
 
         public Task<bool> HallExistsAsync(int id, CancellationToken cancellationToken) =>
             Task.FromResult(id == hallId);
@@ -94,11 +102,14 @@ public class ShowSchedulerTests
             Task.FromResult<IReadOnlyList<Show>>(
                 [.. Shows.Where(show => show.StartsAt >= from && show.StartsAt < to && (hall == null || show.HallId == hall))]);
 
-        public Task AddShowAsync(Show show, CancellationToken cancellationToken)
+        public Task<bool> TryAddShowAsync(Show show, CancellationToken cancellationToken)
         {
+            if (SomeoneElseTakesTheSlot)
+                return Task.FromResult(false);
+
             show.Movie = movie;
             Shows.Add(show);
-            return Task.CompletedTask;
+            return Task.FromResult(true);
         }
 
         public Task<IReadOnlyList<Hall>> ListHallsAsync(CancellationToken cancellationToken) => throw new NotSupportedException();

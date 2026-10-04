@@ -1,4 +1,5 @@
 using CinemaBooking.Bookings.Core;
+using CinemaBooking.Tests.Shared;
 
 namespace CinemaBooking.Bookings.Tests;
 
@@ -13,16 +14,13 @@ public class BookingServiceTests
     private static readonly IReadOnlyList<HallSeat> Hall = Halls.WithRows("AB", seatsPerRow: 3);
 
     private readonly InMemoryBookings _bookings = new();
+    private readonly FakeShowCatalog _catalog = new(
+        new ShowInfo(Matinee, Now.AddHours(3), Hall),
+        new ShowInfo(Evening, Now.AddHours(8), Hall),
+        new ShowInfo(AlreadyStarted, Now.AddMinutes(-10), Hall));
     private readonly BookingService _service;
 
-    public BookingServiceTests()
-    {
-        var catalog = new FakeShowCatalog(
-            new ShowInfo(Matinee, Now.AddHours(3), Hall),
-            new ShowInfo(Evening, Now.AddHours(8), Hall),
-            new ShowInfo(AlreadyStarted, Now.AddMinutes(-10), Hall));
-        _service = new BookingService(catalog, _bookings, new FixedClock(Now));
-    }
+    public BookingServiceTests() => _service = new BookingService(_catalog, _bookings, new FixedClock(Now));
 
     [Fact]
     public async Task Books_the_seats_chosen_by_the_user()
@@ -61,6 +59,14 @@ public class BookingServiceTests
         var result = await Book(Alice, Quantity(Matinee, 2), Quantity(Matinee, 2));
 
         Assert.Equal(4, result.Booking!.BookedSeats.Select(seat => seat.SeatId).Distinct().Count());
+    }
+
+    [Fact]
+    public async Task Asks_the_catalog_only_once_for_a_show_that_appears_in_several_items()
+    {
+        await Book(Alice, Seats(Matinee, 1), Seats(Matinee, 2), Quantity(Matinee, 1));
+
+        Assert.Equal(1, _catalog.Lookups);
     }
 
     [Fact]
@@ -180,6 +186,15 @@ public class BookingServiceTests
 
         Assert.Equal(CancelBookingError.BookingNotFound, error);
         Assert.False(booking.IsCancelled);
+    }
+
+    [Fact]
+    public async Task Shows_a_booking_only_to_the_user_who_made_it()
+    {
+        var booking = (await Book(Alice, Seats(Matinee, 1))).Booking!;
+
+        Assert.Same(booking, await _service.FindAsync(Alice, booking.BookingId, CancellationToken.None));
+        Assert.Null(await _service.FindAsync(Bob, booking.BookingId, CancellationToken.None));
     }
 
     [Fact]
