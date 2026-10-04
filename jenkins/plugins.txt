@@ -1,0 +1,6 @@
+configuration-as-code
+git
+job-dsl
+mstest
+pipeline-stage-view
+workflow-aggregator
