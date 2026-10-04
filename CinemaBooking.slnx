@@ -16,12 +16,17 @@
     <File Path="postman/CinemaBooking.postman_collection.json" />
   </Folder>
   <Folder Name="/src/" />
+  <Folder Name="/src/Bookings/">
+    <Project Path="src/Bookings/CinemaBooking.Bookings.Core/CinemaBooking.Bookings.Core.csproj" />
+    <Project Path="src/Bookings/CinemaBooking.Bookings.Infrastructure/CinemaBooking.Bookings.Infrastructure.csproj" />
+  </Folder>
   <Folder Name="/src/Catalog/">
     <Project Path="src/Catalog/CinemaBooking.Catalog.Api/CinemaBooking.Catalog.Api.csproj" />
     <Project Path="src/Catalog/CinemaBooking.Catalog.Core/CinemaBooking.Catalog.Core.csproj" />
     <Project Path="src/Catalog/CinemaBooking.Catalog.Infrastructure/CinemaBooking.Catalog.Infrastructure.csproj" />
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/CinemaBooking.Bookings.Tests/CinemaBooking.Bookings.Tests.csproj" />
     <Project Path="tests/CinemaBooking.Catalog.Tests/CinemaBooking.Catalog.Tests.csproj" />
   </Folder>
 </Solution>
