@@ -1,0 +1,17 @@
+[
+  {
+    "Name": "All services",
+    "Projects": [
+      {
+        "Path": "src\\Catalog\\CinemaBooking.Catalog.Api\\CinemaBooking.Catalog.Api.csproj",
+        "Action": "Start",
+        "DebugTarget": "https"
+      },
+      {
+        "Path": "src\\Bookings\\CinemaBooking.Bookings.Api\\CinemaBooking.Bookings.Api.csproj",
+        "Action": "Start",
+        "DebugTarget": "https"
+      }
+    ]
+  }
+]

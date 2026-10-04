@@ -9,7 +9,13 @@
     { "key": "hallId", "value": "" },
     { "key": "movieId", "value": "" },
     { "key": "showId", "value": "" },
-    { "key": "showStartsAt", "value": "" }
+    { "key": "showStartsAt", "value": "" },
+    { "key": "bookingsUrl", "value": "http://localhost:5102" },
+    { "key": "userId", "value": "1" },
+    { "key": "otherUserId", "value": "2" },
+    { "key": "seatId", "value": "" },
+    { "key": "freeSeats", "value": "" },
+    { "key": "bookingId", "value": "" }
   ],
   "item": [
     {
@@ -245,6 +251,316 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('show is not found', () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Bookings",
+      "item": [
+        {
+          "name": "Health",
+          "request": { "method": "GET", "url": "{{bookingsUrl}}/health" },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('service is up', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Check availability",
+          "request": { "method": "GET", "url": "{{bookingsUrl}}/shows/{{showId}}/availability" },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const availability = pm.response.json();",
+                  "pm.test('every seat is free', () => {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(availability.freeSeats).to.eql(availability.seats.length);",
+                  "});",
+                  "pm.collectionVariables.set('seatId', availability.seats[0].seatId);",
+                  "pm.collectionVariables.set('freeSeats', availability.freeSeats);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Book a chosen seat",
+          "request": {
+            "method": "POST",
+            "url": "{{bookingsUrl}}/bookings",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-User-Id", "value": "{{userId}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"items\": [\n    { \"showId\": {{showId}}, \"seatIds\": [{{seatId}}] }\n  ]\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('seat is booked', () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set('bookingId', pm.response.json().bookingId);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Book the same seat as another user",
+          "request": {
+            "method": "POST",
+            "url": "{{bookingsUrl}}/bookings",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-User-Id", "value": "{{otherUserId}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"items\": [\n    { \"showId\": {{showId}}, \"seatIds\": [{{seatId}}] }\n  ]\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('seat is already taken', () => pm.response.to.have.status(409));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Book two seats without choosing them",
+          "request": {
+            "method": "POST",
+            "url": "{{bookingsUrl}}/bookings",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-User-Id", "value": "{{otherUserId}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"items\": [\n    { \"showId\": {{showId}}, \"quantity\": 2 }\n  ]\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('two seats are assigned', () => {",
+                  "    pm.response.to.have.status(201);",
+                  "    pm.expect(pm.response.json().seats).to.have.lengthOf(2);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Check availability after booking",
+          "request": { "method": "GET", "url": "{{bookingsUrl}}/shows/{{showId}}/availability" },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('three seats are taken', () => {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(pm.response.json().freeSeats).to.eql(Number(pm.collectionVariables.get('freeSeats')) - 3);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List my bookings",
+          "request": {
+            "method": "GET",
+            "url": "{{bookingsUrl}}/bookings",
+            "header": [{ "key": "X-User-Id", "value": "{{userId}}" }]
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('contains the new booking', () => {",
+                  "    pm.response.to.have.status(200);",
+                  "    const ids = pm.response.json().map(booking => booking.bookingId);",
+                  "    pm.expect(ids).to.include(Number(pm.collectionVariables.get('bookingId')));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get booking",
+          "request": {
+            "method": "GET",
+            "url": "{{bookingsUrl}}/bookings/{{bookingId}}",
+            "header": [{ "key": "X-User-Id", "value": "{{userId}}" }]
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('returns the booking', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get booking of another user",
+          "request": {
+            "method": "GET",
+            "url": "{{bookingsUrl}}/bookings/{{bookingId}}",
+            "header": [{ "key": "X-User-Id", "value": "{{otherUserId}}" }]
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('booking is hidden', () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cancel booking",
+          "request": {
+            "method": "DELETE",
+            "url": "{{bookingsUrl}}/bookings/{{bookingId}}",
+            "header": [{ "key": "X-User-Id", "value": "{{userId}}" }]
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('booking is cancelled', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cancel booking twice",
+          "request": {
+            "method": "DELETE",
+            "url": "{{bookingsUrl}}/bookings/{{bookingId}}",
+            "header": [{ "key": "X-User-Id", "value": "{{userId}}" }]
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('second cancellation is refused', () => pm.response.to.have.status(409));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Check availability after cancelling",
+          "request": { "method": "GET", "url": "{{bookingsUrl}}/shows/{{showId}}/availability" },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('the cancelled seat is free again', () => {",
+                  "    const seatId = Number(pm.collectionVariables.get('seatId'));",
+                  "    pm.expect(pm.response.json().seats.find(seat => seat.seatId === seatId).isFree).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Book an unknown show",
+          "request": {
+            "method": "POST",
+            "url": "{{bookingsUrl}}/bookings",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-User-Id", "value": "{{userId}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"items\": [\n    { \"showId\": 0, \"quantity\": 1 }\n  ]\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('show is not found', () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Book without seats and quantity",
+          "request": {
+            "method": "POST",
+            "url": "{{bookingsUrl}}/bookings",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-User-Id", "value": "{{userId}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"items\": [\n    { \"showId\": {{showId}} }\n  ]\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('booking is rejected', () => pm.response.to.have.status(400));"
                 ]
               }
             }

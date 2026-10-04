@@ -17,6 +17,7 @@
   </Folder>
   <Folder Name="/src/" />
   <Folder Name="/src/Bookings/">
+    <Project Path="src/Bookings/CinemaBooking.Bookings.Api/CinemaBooking.Bookings.Api.csproj" />
     <Project Path="src/Bookings/CinemaBooking.Bookings.Core/CinemaBooking.Bookings.Core.csproj" />
     <Project Path="src/Bookings/CinemaBooking.Bookings.Infrastructure/CinemaBooking.Bookings.Infrastructure.csproj" />
   </Folder>

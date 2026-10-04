@@ -5,6 +5,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
     <PackageReference Include="xunit" />
     <PackageReference Include="xunit.runner.visualstudio" />
@@ -15,7 +16,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Bookings\CinemaBooking.Bookings.Core\CinemaBooking.Bookings.Core.csproj" />
+    <ProjectReference Include="..\..\src\Bookings\CinemaBooking.Bookings.Api\CinemaBooking.Bookings.Api.csproj" />
   </ItemGroup>
 
 </Project>
