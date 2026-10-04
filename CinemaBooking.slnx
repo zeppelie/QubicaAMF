@@ -11,6 +11,7 @@
   </Folder>
   <Folder Name="/database/1.0.0/dml/">
     <File Path="database/1.0.0/dml/01_catalog_seed.sql" />
+    <File Path="database/1.0.0/dml/02_identity_seed.sql" />
   </Folder>
   <Folder Name="/postman/">
     <File Path="postman/CinemaBooking.postman_collection.json" />
@@ -26,8 +27,15 @@
     <Project Path="src/Catalog/CinemaBooking.Catalog.Core/CinemaBooking.Catalog.Core.csproj" />
     <Project Path="src/Catalog/CinemaBooking.Catalog.Infrastructure/CinemaBooking.Catalog.Infrastructure.csproj" />
   </Folder>
+  <Folder Name="/src/Identity/">
+    <Project Path="src/Identity/CinemaBooking.Identity.Api/CinemaBooking.Identity.Api.csproj" />
+  </Folder>
+  <Folder Name="/src/Shared/">
+    <Project Path="src/Shared/CinemaBooking.Security/CinemaBooking.Security.csproj" />
+  </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/CinemaBooking.Bookings.Tests/CinemaBooking.Bookings.Tests.csproj" />
     <Project Path="tests/CinemaBooking.Catalog.Tests/CinemaBooking.Catalog.Tests.csproj" />
+    <Project Path="tests/CinemaBooking.Identity.Tests/CinemaBooking.Identity.Tests.csproj" />
   </Folder>
 </Solution>

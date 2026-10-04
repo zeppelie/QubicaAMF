@@ -1,9 +1,12 @@
 using CinemaBooking.Bookings.Core;
+using CinemaBooking.Security;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CinemaBooking.Bookings.Api.Controllers;
 
 [ApiController]
+[Authorize]
 [Route("bookings")]
 public sealed class BookingsController(IBookingService bookings, IBookingRepository repository) : ControllerBase
 {
@@ -13,10 +16,9 @@ public sealed class BookingsController(IBookingService bookings, IBookingReposit
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict)]
-    public async Task<IActionResult> Create(
-        [FromHeader(Name = "X-User-Id")] int userId, CreateBookingRequest request, CancellationToken cancellationToken)
+    public async Task<IActionResult> Create(CreateBookingRequest request, CancellationToken cancellationToken)
     {
-        var result = await bookings.BookAsync(userId, [.. request.Items.Select(item => item.ToSeatRequest())], cancellationToken);
+        var result = await bookings.BookAsync(User.GetUserId(), [.. request.Items.Select(item => item.ToSeatRequest())], cancellationToken);
 
         return result.Error switch
         {
@@ -37,10 +39,9 @@ public sealed class BookingsController(IBookingService bookings, IBookingReposit
 
     /// <summary>Lists the bookings of the user, newest first.</summary>
     [HttpGet]
-    public async Task<IReadOnlyList<BookingResponse>> List(
-        [FromHeader(Name = "X-User-Id")] int userId, CancellationToken cancellationToken)
+    public async Task<IReadOnlyList<BookingResponse>> List(CancellationToken cancellationToken)
     {
-        var mine = await repository.ListByUserAsync(userId, cancellationToken);
+        var mine = await repository.ListByUserAsync(User.GetUserId(), cancellationToken);
         return [.. mine.Select(booking => booking.ToResponse())];
     }
 
@@ -48,11 +49,10 @@ public sealed class BookingsController(IBookingService bookings, IBookingReposit
     [HttpGet("{bookingId:int}")]
     [ProducesResponseType<BookingResponse>(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> GetById(
-        [FromHeader(Name = "X-User-Id")] int userId, int bookingId, CancellationToken cancellationToken)
+    public async Task<IActionResult> GetById(int bookingId, CancellationToken cancellationToken)
     {
         var booking = await repository.FindAsync(bookingId, cancellationToken);
-        return booking is null || booking.UserId != userId ? BookingNotFound(bookingId) : Ok(booking.ToResponse());
+        return booking is null || booking.UserId != User.GetUserId() ? BookingNotFound(bookingId) : Ok(booking.ToResponse());
     }
 
     /// <summary>Cancels a booking and frees its seats.</summary>
@@ -60,10 +60,9 @@ public sealed class BookingsController(IBookingService bookings, IBookingReposit
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict)]
-    public async Task<IActionResult> Cancel(
-        [FromHeader(Name = "X-User-Id")] int userId, int bookingId, CancellationToken cancellationToken)
+    public async Task<IActionResult> Cancel(int bookingId, CancellationToken cancellationToken)
     {
-        var error = await bookings.CancelAsync(userId, bookingId, cancellationToken);
+        var error = await bookings.CancelAsync(User.GetUserId(), bookingId, cancellationToken);
 
         return error switch
         {

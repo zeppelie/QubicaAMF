@@ -1,6 +1,7 @@
 using CinemaBooking.Bookings.Api;
 using CinemaBooking.Bookings.Core;
 using CinemaBooking.Bookings.Infrastructure;
+using CinemaBooking.Security;
 using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -13,7 +14,8 @@ var catalogUrl = builder.Configuration["Catalog:BaseUrl"]
 builder.Services.AddControllers();
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<CatalogUnavailableHandler>();
-builder.Services.AddOpenApi();
+builder.Services.AddOpenApi(options => options.AddBearerToken());
+builder.Services.AddJwtSecurity(builder.Configuration);
 builder.Services.AddHealthChecks();
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddScoped<IBookingService, BookingService>();

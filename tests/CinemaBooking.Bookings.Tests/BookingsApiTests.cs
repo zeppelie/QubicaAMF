@@ -1,6 +1,8 @@
 using System.Net;
 using System.Net.Http.Json;
 using CinemaBooking.Bookings.Api;
+using CinemaBooking.Security;
+using CinemaBooking.Tests.Shared;
 
 namespace CinemaBooking.Bookings.Tests;
 
@@ -14,7 +16,7 @@ public class BookingsApiTests(BookingsApiFactory factory) : IClassFixture<Bookin
     {
         await Book(factory.Alice, new BookingItemRequest(_showId, [2], Quantity: null));
 
-        var availability = await ClientOf(factory.Alice)
+        var availability = await factory.CreateClient()
             .GetFromJsonAsync<ShowAvailabilityResponse>($"/shows/{_showId}/availability");
 
         Assert.Equal(5, availability!.FreeSeats);
@@ -83,6 +85,16 @@ public class BookingsApiTests(BookingsApiFactory factory) : IClassFixture<Bookin
     }
 
     [Fact]
+    public async Task Refuses_a_booking_without_a_token()
+    {
+        var request = new CreateBookingRequest([new BookingItemRequest(_showId, SeatIds: null, Quantity: 1)]);
+
+        var response = await factory.CreateClient().PostAsJsonAsync("/bookings", request);
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact]
     public async Task A_cancelled_booking_frees_its_seats_for_someone_else()
     {
         var booking = await (await Book(factory.Alice, new BookingItemRequest(_showId, [1], Quantity: null)))
@@ -115,10 +127,5 @@ public class BookingsApiTests(BookingsApiFactory factory) : IClassFixture<Bookin
     private Task<HttpResponseMessage> Book(int userId, params BookingItemRequest[] items) =>
         ClientOf(userId).PostAsJsonAsync("/bookings", new CreateBookingRequest(items));
 
-    private HttpClient ClientOf(int userId)
-    {
-        var client = factory.CreateClient();
-        client.DefaultRequestHeaders.Add("X-User-Id", userId.ToString());
-        return client;
-    }
+    private HttpClient ClientOf(int userId) => factory.CreateClientFor(userId, Roles.Customer);
 }

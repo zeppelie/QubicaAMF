@@ -6,13 +6,13 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\CinemaBooking.Catalog.Core\CinemaBooking.Catalog.Core.csproj" />
-    <ProjectReference Include="..\CinemaBooking.Catalog.Infrastructure\CinemaBooking.Catalog.Infrastructure.csproj" />
     <ProjectReference Include="..\..\Shared\CinemaBooking.Security\CinemaBooking.Security.csproj" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" PrivateAssets="all" />
     <PackageReference Include="Scalar.AspNetCore" />
   </ItemGroup>
 

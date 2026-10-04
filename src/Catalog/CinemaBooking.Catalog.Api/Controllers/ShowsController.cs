@@ -1,4 +1,6 @@
 using CinemaBooking.Catalog.Core;
+using CinemaBooking.Security;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CinemaBooking.Catalog.Api.Controllers;
@@ -44,6 +46,7 @@ public sealed class ShowsController(ICatalogRepository repository, IShowSchedule
 
     /// <summary>Schedules a movie in a hall.</summary>
     [HttpPost]
+    [Authorize(Roles = Roles.Admin)]
     [ProducesResponseType<ShowResponse>(StatusCodes.Status201Created)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]

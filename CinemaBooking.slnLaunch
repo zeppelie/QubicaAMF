@@ -3,6 +3,11 @@
     "Name": "All services",
     "Projects": [
       {
+        "Path": "src\\Identity\\CinemaBooking.Identity.Api\\CinemaBooking.Identity.Api.csproj",
+        "Action": "Start",
+        "DebugTarget": "https"
+      },
+      {
         "Path": "src\\Catalog\\CinemaBooking.Catalog.Api\\CinemaBooking.Catalog.Api.csproj",
         "Action": "Start",
         "DebugTarget": "https"

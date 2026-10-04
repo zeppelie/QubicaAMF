@@ -8,6 +8,7 @@
   <ItemGroup>
     <ProjectReference Include="..\CinemaBooking.Bookings.Core\CinemaBooking.Bookings.Core.csproj" />
     <ProjectReference Include="..\CinemaBooking.Bookings.Infrastructure\CinemaBooking.Bookings.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\Shared\CinemaBooking.Security\CinemaBooking.Security.csproj" />
   </ItemGroup>
 
   <ItemGroup>

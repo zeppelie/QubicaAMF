@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <IsPackable>false</IsPackable>
@@ -13,11 +13,10 @@
 
   <ItemGroup>
     <Using Include="Xunit" />
-    <Compile Include="..\Shared\TestTokens.cs" Link="Shared\TestTokens.cs" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Catalog\CinemaBooking.Catalog.Api\CinemaBooking.Catalog.Api.csproj" />
+    <ProjectReference Include="..\..\src\Identity\CinemaBooking.Identity.Api\CinemaBooking.Identity.Api.csproj" />
   </ItemGroup>
 
 </Project>

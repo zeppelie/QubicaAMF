@@ -1,5 +1,7 @@
 using CinemaBooking.Catalog.Core;
 using CinemaBooking.Catalog.Core.Entities;
+using CinemaBooking.Security;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CinemaBooking.Catalog.Api.Controllers;
@@ -18,6 +20,7 @@ public sealed class MoviesController(ICatalogRepository repository) : Controller
 
     /// <summary>Adds a movie to the catalog.</summary>
     [HttpPost]
+    [Authorize(Roles = Roles.Admin)]
     [ProducesResponseType<MovieResponse>(StatusCodes.Status201Created)]
     [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Create(CreateMovieRequest request, CancellationToken cancellationToken)
