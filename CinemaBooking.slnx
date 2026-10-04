@@ -28,6 +28,9 @@
   <Folder Name="/postman/">
     <File Path="postman/CinemaBooking.postman_collection.json" />
   </Folder>
+  <Folder Name="/Solution Items/">
+    <File Path="README.md" />
+  </Folder>
   <Folder Name="/src/" />
   <Folder Name="/src/Bookings/">
     <Project Path="src/Bookings/CinemaBooking.Bookings.Api/CinemaBooking.Bookings.Api.csproj" />
