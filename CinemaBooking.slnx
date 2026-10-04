@@ -13,6 +13,18 @@
     <File Path="database/1.0.0/dml/01_catalog_seed.sql" />
     <File Path="database/1.0.0/dml/02_identity_seed.sql" />
   </Folder>
+  <Folder Name="/docker/">
+    <File Path=".dockerignore" />
+    <File Path=".env.example" />
+    <File Path="docker-compose.yml" />
+    <File Path="Dockerfile" />
+  </Folder>
+  <Folder Name="/jenkins/">
+    <File Path="Jenkinsfile" />
+    <File Path="jenkins/casc.yaml" />
+    <File Path="jenkins/Dockerfile" />
+    <File Path="jenkins/plugins.txt" />
+  </Folder>
   <Folder Name="/postman/">
     <File Path="postman/CinemaBooking.postman_collection.json" />
   </Folder>

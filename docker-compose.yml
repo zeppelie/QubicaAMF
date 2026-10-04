@@ -1,0 +1,96 @@
+x-service: &service
+  restart: unless-stopped
+  depends_on:
+    db-init:
+      condition: service_completed_successfully
+
+x-jwt-key: &jwt-key ${JWT_KEY:?set JWT_KEY in the .env file}
+
+services:
+  db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    restart: unless-stopped
+    environment:
+      ACCEPT_EULA: ${ACCEPT_EULA:?set ACCEPT_EULA in the .env file}
+      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD:?set MSSQL_SA_PASSWORD in the .env file}
+    ports:
+      - "127.0.0.1:14330:1433"
+    volumes:
+      - db-data:/var/opt/mssql
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P \"$$MSSQL_SA_PASSWORD\" -C -b -Q \"SELECT 1\""]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  db-init:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD}
+    volumes:
+      - ./database:/database:ro
+    working_dir: /database
+    entrypoint: ["/bin/sh", "-c", "/opt/mssql-tools18/bin/sqlcmd -S db -U sa -P \"$$MSSQL_SA_PASSWORD\" -C -b -i 1.0.0.sql"]
+
+  identity:
+    <<: *service
+    build:
+      context: .
+      args:
+        SERVICE: Identity
+    environment:
+      ConnectionStrings__Identity: Server=db;Database=CinemaIdentity;User Id=sa;Password=${MSSQL_SA_PASSWORD};TrustServerCertificate=True
+      Jwt__Key: *jwt-key
+    ports:
+      - "5103:8080"
+
+  catalog:
+    <<: *service
+    build:
+      context: .
+      args:
+        SERVICE: Catalog
+    environment:
+      ConnectionStrings__Catalog: Server=db;Database=CinemaCatalog;User Id=sa;Password=${MSSQL_SA_PASSWORD};TrustServerCertificate=True
+      Jwt__Key: *jwt-key
+    ports:
+      - "5101:8080"
+
+  bookings:
+    <<: *service
+    build:
+      context: .
+      args:
+        SERVICE: Bookings
+    environment:
+      ConnectionStrings__Bookings: Server=db;Database=CinemaBooking;User Id=sa;Password=${MSSQL_SA_PASSWORD};TrustServerCertificate=True
+      Catalog__BaseUrl: http://catalog:8080
+      Jwt__Key: *jwt-key
+    ports:
+      - "5102:8080"
+
+  jenkins:
+    profiles: ["ci"]
+    build: ./jenkins
+    restart: unless-stopped
+    depends_on:
+      db-init:
+        condition: service_completed_successfully
+    environment:
+      JENKINS_ADMIN_PASSWORD: ${JENKINS_ADMIN_PASSWORD:?set JENKINS_ADMIN_PASSWORD in the .env file}
+      ConnectionStrings__Identity: Server=db;Database=CinemaIdentity;User Id=sa;Password=${MSSQL_SA_PASSWORD};TrustServerCertificate=True
+      ConnectionStrings__Catalog: Server=db;Database=CinemaCatalog;User Id=sa;Password=${MSSQL_SA_PASSWORD};TrustServerCertificate=True
+      ConnectionStrings__Bookings: Server=db;Database=CinemaBooking;User Id=sa;Password=${MSSQL_SA_PASSWORD};TrustServerCertificate=True
+    ports:
+      - "8090:8080"
+    volumes:
+      - jenkins-data:/var/jenkins_home
+      - .:/repo:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+
+volumes:
+  db-data:
+  jenkins-data:
