@@ -13,6 +13,6 @@ public interface IBookingService
     /// <summary>Newest first.</summary>
     Task<IReadOnlyList<Booking>> ListAsync(int userId, CancellationToken cancellationToken);
 
-    /// <summary>Returns null when the booking was cancelled, otherwise the reason it could not be.</summary>
+    /// <summary>Cancels the whole booking, as long as none of its shows has started; returns null when it succeeds.</summary>
     Task<CancelBookingError?> CancelAsync(int userId, int bookingId, CancellationToken cancellationToken);
 }

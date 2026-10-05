@@ -34,6 +34,8 @@ SQL Server starts first, a one-shot container runs the database scripts, then th
 - http://localhost:5101/scalar
 - http://localhost:5102/scalar
 
+The same thing can be done from Visual Studio: every API project has a **Docker Compose (up)** launch profile that runs that command and opens the Scalar page, and a **Docker Compose (down)** one that stops everything.
+
 SQL Server is reachable from the host on `localhost,14330` with the `sa` password you put in `.env`.
 
 ### From Visual Studio
@@ -58,7 +60,7 @@ A booking is a list of items, one per show. For each item you either say which s
 
 The booking is all or nothing. If one seat of one show cannot be had, nothing is saved.
 
-You cannot book a show that has already started. You only see and cancel your own bookings, and a booking of someone else looks exactly like one that does not exist. Cancelling puts the seats back on sale.
+You cannot book a show that has already started. You only see and cancel your own bookings, and a booking of someone else looks exactly like one that does not exist. Cancelling puts the seats back on sale, and it is only possible until the first show of the booking starts: after that the whole booking stays as it is.
 
 On the Catalog side, a show cannot start in the past and cannot overlap another show in the same hall.
 
@@ -118,7 +120,7 @@ The job reads the `main` branch of this folder, mounted read-only in the contain
 
 Two people booking the same seat at the same moment. Reading the free seats and then saving is not safe on its own, so the database has the last word: `BookedSeat` has a unique index on show and seat that ignores cancelled rows. The slower request gets a duplicate key error, which becomes a `409`. There is a test that fires eight requests at once and expects exactly one to win. The same trick covers two admins scheduling a show in the same hall at the same time, though only when the start time is identical; two overlapping shows with different start times, sent in the same instant, could still both get in. Closing that properly needs a lock on the hall, and I left it out.
 
-Bookings calling Catalog synchronously. It is simple and never stale, but it means no Catalog, no bookings. The usual answer is for Bookings to keep its own copy of shows and seats, updated by events from Catalog. That is a message broker and a fair amount of code, too much for this exercise.
+Bookings calling Catalog synchronously. It is simple and never stale, but it means no Catalog, no bookings, and no cancellations either, because cancelling has to check when the shows start. The usual answer is for Bookings to keep its own copy of shows and seats, updated by events from Catalog. That is a message broker and a fair amount of code, too much for this exercise.
 
 One signing key shared by the three services. Any service that can check a token could also forge one. With real users I would sign with a private key that only Identity has.
 

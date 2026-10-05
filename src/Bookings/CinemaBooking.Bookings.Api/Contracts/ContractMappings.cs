@@ -19,6 +19,5 @@ public static class ContractMappings
         [.. availability.Seats.Select(seat =>
             new SeatAvailabilityResponse(seat.Seat.SeatId, seat.Seat.RowLabel, seat.Seat.SeatNumber, seat.IsFree))]);
 
-    // The database stores UTC times without an offset.
     private static DateTimeOffset Utc(DateTime value) => new(value, TimeSpan.Zero);
 }

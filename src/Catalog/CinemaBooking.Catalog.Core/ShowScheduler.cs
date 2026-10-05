@@ -4,6 +4,8 @@ namespace CinemaBooking.Catalog.Core;
 
 public sealed class ShowScheduler(ICatalogRepository repository, TimeProvider clock) : IShowScheduler
 {
+    private static readonly TimeSpan LongestPossibleShow = TimeSpan.FromDays(1);
+
     public async Task<ScheduleShowResult> ScheduleAsync(int movieId, int hallId, DateTime startsAt, CancellationToken cancellationToken)
     {
         if (startsAt <= clock.GetUtcNow().UtcDateTime)
@@ -28,8 +30,7 @@ public sealed class ShowScheduler(ICatalogRepository repository, TimeProvider cl
 
     private async Task<bool> HallIsBusyAsync(int hallId, DateTime from, DateTime to, CancellationToken cancellationToken)
     {
-        // A show that began the day before can still be running: no movie lasts longer than that.
-        var nearbyShows = await repository.ListShowsAsync(from.AddDays(-1), to, hallId, cancellationToken);
-        return nearbyShows.Any(show => show.Overlaps(from, to));
+        var showsThatMayStillBeRunning = await repository.ListShowsAsync(from - LongestPossibleShow, to, hallId, cancellationToken);
+        return showsThatMayStillBeRunning.Any(show => show.Overlaps(from, to));
     }
 }

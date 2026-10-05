@@ -1,6 +1,5 @@
 namespace CinemaBooking.Bookings.Core;
 
-/// <summary>The seats of one show while a booking is being put together.</summary>
 internal sealed class ShowSeating(ShowInfo show, IEnumerable<int> takenSeatIds)
 {
     private readonly HashSet<int> _taken = [.. takenSeatIds];
@@ -13,7 +12,6 @@ internal sealed class ShowSeating(ShowInfo show, IEnumerable<int> takenSeatIds)
             ? Assign(request.Quantity!.Value, out seatIds)
             : Choose(request.SeatIds, out seatIds);
 
-        // Remembered here so a later item of the same booking cannot get these seats again.
         if (error is null)
             _taken.UnionWith(seatIds);
 

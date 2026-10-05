@@ -1,6 +1,18 @@
-﻿{
+{
   "$schema": "https://json.schemastore.org/launchsettings.json",
   "profiles": {
+    "Docker Compose (up)": {
+      "commandName": "Executable",
+      "executablePath": "cmd.exe",
+      "commandLineArgs": "/k docker compose up --build -d && start http://localhost:5103/scalar && docker compose logs -f",
+      "workingDirectory": "$(ProjectDir)..\\..\\.."
+    },
+    "Docker Compose (down)": {
+      "commandName": "Executable",
+      "executablePath": "cmd.exe",
+      "commandLineArgs": "/k docker compose down",
+      "workingDirectory": "$(ProjectDir)..\\..\\.."
+    },
     "https": {
       "commandName": "Project",
       "dotnetRunMessages": true,

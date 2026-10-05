@@ -70,7 +70,6 @@ public sealed class ShowsController(
 
         logger.LogInformation("Show {ShowId} scheduled in hall {HallId} at {StartsAt}", result.Show.ShowId, request.HallId, request.StartsAt);
 
-        // Read again to get the movie and the hall that the response shows.
         var show = await repository.FindShowAsync(result.Show.ShowId, cancellationToken);
         return CreatedAtAction(nameof(GetById), new { showId = show!.ShowId }, show.ToResponse());
     }

@@ -68,6 +68,10 @@ public sealed class BookingsController(IBookingService bookings, ILogger<Booking
                 return BookingNotFound(bookingId);
             case CancelBookingError.AlreadyCancelled:
                 return Problem($"Booking {bookingId} is already cancelled.", statusCode: StatusCodes.Status409Conflict);
+            case CancelBookingError.ShowAlreadyStarted:
+                return Problem(
+                    $"Booking {bookingId} cannot be cancelled because one of its shows has already started.",
+                    statusCode: StatusCodes.Status409Conflict);
         }
 
         logger.LogInformation("User {UserId} cancelled booking {BookingId}", userId, bookingId);

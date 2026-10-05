@@ -41,7 +41,11 @@ public sealed class BookingService(IShowCatalog catalog, IBookingRepository repo
         if (booking.IsCancelled)
             return CancelBookingError.AlreadyCancelled;
 
-        booking.Cancel(clock.GetUtcNow().UtcDateTime);
+        var now = clock.GetUtcNow().UtcDateTime;
+        if (await AnyShowHasStartedAsync(booking, now, cancellationToken))
+            return CancelBookingError.ShowAlreadyStarted;
+
+        booking.Cancel(now);
         await repository.SaveChangesAsync(cancellationToken);
         return null;
     }
@@ -66,6 +70,18 @@ public sealed class BookingService(IShowCatalog catalog, IBookingRepository repo
             booking.BookedSeats.Add(new BookedSeat { ShowId = request.ShowId, SeatId = seatId });
 
         return null;
+    }
+
+    private async Task<bool> AnyShowHasStartedAsync(Booking booking, DateTime now, CancellationToken cancellationToken)
+    {
+        foreach (var showId in booking.BookedSeats.Select(seat => seat.ShowId).Distinct())
+        {
+            var show = await catalog.FindShowAsync(showId, cancellationToken);
+            if (show is not null && show.StartsAt <= now)
+                return true;
+        }
+
+        return false;
     }
 
     private async Task<ShowSeating?> SeatingOfAsync(

@@ -19,6 +19,5 @@ public static class ContractMappings
         Utc(show.StartsAt),
         Utc(show.EndsAt));
 
-    // The database stores UTC times without an offset.
     private static DateTimeOffset Utc(DateTime value) => new(value, TimeSpan.Zero);
 }

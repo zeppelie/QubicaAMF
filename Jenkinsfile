@@ -9,7 +9,6 @@ pipeline {
     stages {
         stage('Build') {
             steps {
-                // The workspace is reused: stale results would be counted again in the report.
                 sh 'rm -rf test-results'
                 sh 'dotnet build CinemaBooking.slnx -c Release'
             }

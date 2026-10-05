@@ -189,6 +189,18 @@ public class BookingServiceTests
     }
 
     [Fact]
+    public async Task Cannot_cancel_once_one_of_the_shows_has_started()
+    {
+        var booking = (await Book(Alice, Seats(Matinee, 1), Seats(Evening, 1))).Booking!;
+        var duringTheMatinee = new BookingService(_catalog, _bookings, new FixedClock(Now.AddHours(4)));
+
+        var error = await duringTheMatinee.CancelAsync(Alice, booking.BookingId, CancellationToken.None);
+
+        Assert.Equal(CancelBookingError.ShowAlreadyStarted, error);
+        Assert.False(booking.IsCancelled);
+    }
+
+    [Fact]
     public async Task Shows_a_booking_only_to_the_user_who_made_it()
     {
         var booking = (await Book(Alice, Seats(Matinee, 1))).Booking!;
